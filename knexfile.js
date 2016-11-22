@@ -1,4 +1,4 @@
-const databaseName = 'test-driven-node';
+const databaseName = 'test_driven_node';
 
 module.exports = {
   development: {
