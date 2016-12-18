@@ -45,6 +45,21 @@ describe('routes : products', () => {
         done();
       });
     });
+    it('should respond with a message if there are no products', () => {
+      return knex.migrate.rollback()
+      .then(() => { return knex.migrate.latest(); })
+      .then(() => {
+        chai.request(server)
+        .get('/api/v1/products')
+        .end((err, res) => {
+          should.not.exist(err);
+          res.status.should.equal(200);
+          res.type.should.equal('application/json');
+          res.body.status.should.eql('success');
+          res.body.data.should.eql('Sorry there are no products.');
+        });
+      });
+    });
   });
 
   describe('GET /api/v1/products/:id', () => {
@@ -69,6 +84,29 @@ describe('routes : products', () => {
         res.body.data[0].should.include.keys(
           'id', 'name', 'description', 'price', 'created_at'
         );
+        done();
+      });
+    });
+    it('should throw an error if the product id is null', (done) => {
+      chai.request(server)
+      .get(`/api/v1/products/${null}`)
+      .end((err, res) => {
+        should.exist(err);
+        res.status.should.equal(500);
+        res.body.status.should.eql('error');
+        should.exist(res.body.data);
+        done();
+      });
+    });
+    it('should respond with a message if the product id does not exist', (done) => {
+      chai.request(server)
+      .get(`/api/v1/products/9999`)
+      .end((err, res) => {
+        should.not.exist(err);
+        res.status.should.equal(200);
+        res.type.should.equal('application/json');
+        res.body.status.should.eql('success');
+        res.body.data.should.eql('Sorry that product ID does not exist.');
         done();
       });
     });
@@ -103,6 +141,28 @@ describe('routes : products', () => {
           'id', 'name', 'description', 'price', 'created_at'
         );
         done();
+      });
+    });
+    it('should throw an error when a price is not provided', () => {
+      chai.request(server)
+      .post('/api/v1/products')
+      .send({
+        name: 'test product',
+        description: 'just a test description'
+      })
+      .end((err, res) => {
+        should.exist(err);
+        res.status.should.equal(500);
+        res.status.should.equal(500);
+        res.body.status.should.eql('error');
+        should.exist(res.body.data);
+        // ensure the product was not added
+        knex('products')
+        .select('*')
+        .where({ name: 'test product' })
+        .then((product) => {
+          product.length.should.eql(0);
+        });
       });
     });
   });

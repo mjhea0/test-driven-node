@@ -6,6 +6,12 @@ const knex = require('../db/connection');
 router.get('/', (req, res, next) => {
   knex('products').select('*')
   .then((products) => {
+    if (!products.length) {
+      return res.status(200).json({
+        status: 'success',
+        data: 'Sorry there are no products.'
+      });
+    }
     res.status(200).json({
       status: 'success',
       data: products
@@ -23,6 +29,12 @@ router.get('/:id', (req, res, next) => {
   const productID = parseInt(req.params.id);
   knex('products').select('*').where({ id: productID })
   .then((product) => {
+    if (!product.length) {
+      return res.status(200).json({
+        status: 'success',
+        data: 'Sorry that product ID does not exist.'
+      });
+    }
     res.status(200).json({
       status: 'success',
       data: product
