@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 
 const knex = require('../db/connection');
+const queries = require('../db/queries.products.js');
 
 router.get('/', (req, res, next) => {
-  knex('products').select('*')
+  queries.getAllProducts()
   .then((products) => {
     if (!products.length) {
       return res.status(200).json({
@@ -27,7 +28,7 @@ router.get('/', (req, res, next) => {
 
 router.get('/:id', (req, res, next) => {
   const productID = parseInt(req.params.id);
-  knex('products').select('*').where({ id: productID })
+  queries.getSingleProduct(productID)
   .then((product) => {
     if (!product.length) {
       return res.status(200).json({
@@ -49,13 +50,12 @@ router.get('/:id', (req, res, next) => {
 });
 
 router.post('/', (req, res, next) => {
-  knex('products')
-  .insert({
+  const productObject = {
     name: req.body.name,
     description: req.body.description,
     price: req.body.price
-  })
-  .returning('*')
+  };
+  queries.addProduct(productObject)
   .then((product) => {
     res.status(201).json({
       status: 'success',
@@ -71,20 +71,13 @@ router.post('/', (req, res, next) => {
 });
 
 router.put('/:id', (req, res, next) => {
+  const productObject = {
+    name: req.body.name,
+    description: req.body.description,
+    price: req.body.price
+  };
   const productID = parseInt(req.params.id);
-  const updatedName = req.body.name;
-  const updatedDescription = req.body.description;
-  const updatedPrice = req.body.price;
-  knex('products')
-  .update({
-    name: updatedName,
-    description: updatedDescription,
-    price: updatedPrice
-  })
-  .where({
-    id: productID
-  })
-  .returning('*')
+  queries.updateProduct(productObject, productID)
   .then((user) => {
     res.status(200).json({
       status: 'success',
@@ -101,7 +94,7 @@ router.put('/:id', (req, res, next) => {
 
 router.delete('/:id', (req, res, next) => {
   const productID = parseInt(req.params.id);
-  knex('products').del().where({ id: productID }).returning('*')
+  queries.removeProduct(productID)
   .then((product) => {
     res.status(200).json({
       status: 'success',
